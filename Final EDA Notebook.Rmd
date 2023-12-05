@@ -1,0 +1,194 @@
+---
+title: "Final EDA Notebook"
+author: "Amy Chen"
+date: "2023-12-05"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+install.packages("tidyverse")
+library("tidyverse")
+```
+
+# Introduction and Research Overview:
+
+For our exploratory data analysis project, we wanted to examine the impact of undergraduate college majors on future employment opportunities and earnings. College students widely believe that their undergraduate major has implications on their future career opportunities and lifelong earnings. A multitude of factors ultimately contribute to their decision process, such as personal aptitudes, aspirations, and financial motives. For example, students who prioritize high salaries may sacrifice genuine academic interests to pursue a degree in a more lucrative field. 
+
+Cultural factors beyond students’ control also assign different values to specific skills and industries. Science, technology, engineering, and math (STEM) are subjects associated with high levels of prestige and intelligence due to their technical nature and high demand in the U.S. job market. Other disciplines that focus on transferable skills, such as writing, critical thinking, or creativity, tend to receive less recognition as it is believed that these skills can be more easily obtained. Furthermore, emotional labor associated with femininity, such as teaching, nursing, or counseling, tend to be undervalued in our society due to persistent gender discrimination. Therefore, women experience multiple forms of discrimination and inequality that shape their educational and career trajectories. These cultural factors can strongly influence students’ decision-making in terms of their undergraduate major and occupational pursuits. 
+
+To determine whether or not undergraduate college majors affect career opportunities and financial outlooks of graduating students, we searched for a nationally representative dataset that reported information on college majors, post-grad salaries, and employment rates. The American Community Survey (ACS) Public Use Microdata Series (PUMS) from 2010 to 2012 collects information on social, economic, and demographic characteristics from its participants, which includes the variables that our research requires. The U.S. Census Bureau conducts this particular survey across households from all U.S. counties in a randomized manner. This ensures that the methods of data collection is nationally representative and unbiased. 
+
+The specific dataset that we used for data analysis has been filtered and structured by FiveThirtyEight, an online journalism organization that uses empirical evidence and transparent data sources in its publications. FiveThirtyEight has previously conducted research studies examining the relationship between college majors and economic outcomes. Therefore, they have intentionally selected variables relevant to recent graduates in their filtered version of the ACS survey.. Through our analysis, we hope to transparently inform students about their future job prospects and salary expectations available based on their college major. By including gender, we aim to illuminate any inequalities between men and women in terms of industry, pay, and employment. We also want to acknowledge that earnings and employment are not the only measures of career or financial success. However, for a large majority of the working population, these variables can significantly impact one’s quality of life.
+
+```{r cars}
+recent_grads <- read.csv("recent-grads.csv")
+```
+
+# Brief Overview of Data
+
+We used the summary function to get a glimpse into our dataset (recent_grads) and the types of variables available. As seen below, the summary function produces a brief overview of each variable and its extremities. Notable variables that appealed to our research question include: Major, Major_cateogry (general field of study), Total (count of graduates), Employed (count of employed graduates), Median (salary), Full_time (count of graduates working full-time), and ShareWomen (proportion of women in each major). We will further investigate these variables to produce insights about the popularity of majors, job opportunities on the market, salary outlooks, and gender distribution.
+
+```{r}
+summary(recent_grads)
+```
+
+# Checking for Missing Values
+
+We checked the dataset for NAs or missing values to assess the dataset's quality. As shown below, the dataset contains very few missing values. There is a single missing value in the “Men” and “ShareWomen” variables. However, this should be a manageable barrier for our analysis as employment and financial compensation are the primary focuses of our data exploration. The lack of missing values indicates that the dataset was created thoughtfully and meticulously. As a result, we will not have to make many assumptions about the missing information in the dataset, and there are no significant gaps in our knowledge.
+
+```{r}
+na_counts <- sapply(recent_grads, function(x) sum(is.na(x)))
+print(na_counts) 
+```
+
+# Number of Specializations in Each Major Category:
+
+The graph below shows the distribution of specializations within each major category. Engineering is the most diverse major, encompassing nearly 30 different disciplines. There is a noticeably large gap between the number of fields within engineering and all other major categories. It is loosely followed by education and the liberal arts. At the opposite end of the spectrum, interdisciplinary majors have the least variety of specializations. Interdisciplinary studies typically combine two divergent academic disciplines into one major based on the student’s interests. However, it is not the only major that can do so. Other majors may teach interdisciplinary content but still be categorized differently due to varying university standards. Interdisciplinary majors, as defined in this dataset, specifically involve student-created majors that do not fall into an established academic department. The lack of variety in interdisciplinary studies aligns with our expectations as student-created majors are a relatively new concept in higher education, and many universities have not yet established programs for this particular major.
+
+```{r}
+recent_grads$Major_category <- factor(recent_grads$Major_category, levels = unique(recent_grads$Major_category))
+
+ggplot(recent_grads, aes(x = reorder(Major_category, -table(Major_category)[Major_category]))) +
+  geom_bar() +
+  xlab("Major Categories") +
+  ylab("Number of Specific Majors in Each Category") +
+  coord_flip()
+
+```
+
+# Student Distribution between Majors
+
+To determine the most popular majors among students, we created a bar plot displaying the number of graduates in each major category and ranking them in ascending order. Looking at the student distribution between these broad major categories, business is the most popular major category, with approximately 100,000 graduates. It is closely followed by communications and journalism, then the social sciences. The least popular major categories include agriculture, interdisciplinary studies, and engineering. These trends support widespread cultural assumptions about majors that lead to success and financial opportunities. Many cultural notions depict business as the tried-and-true path to achieving economic success in America, while agriculture is associated with poor economic outcomes.
+
+```{r}
+ggplot(recent_grads, aes(x = reorder(Major_category, -Total), y = Total))+
+  geom_bar(stat = "summary")+
+  coord_flip()+
+  xlab("Major Category")+
+  ylab("Number of Graduates")
+```
+# Top 10 Highest Earning Majors
+Financial compensation can be a significant motivating factor driving a student's academic and career pursuits. The bar graph below visualizes the top ten majors with the highest median salaries. The top eight highest-earning majors belong to the engineering category, with petroleum engineering taking first place. The only non-engineering majors in this list include astronomy and astrophysics (under Physical Sciences) and actuarial science (under Business). These majors are highly technical and typically very difficult to obtain; they require students to have excellent mathematical knowledge and proficiencies in design and computing. Since there is a limited pool of students who excel in this specific skill set, employers might be willing to pay more to compensate for their technical knowledge due to the low supply and high demand. This ranking also indicates that STEM majors are more highly compensated than their liberal arts counterparts, which indicates society's emphasis on technological development. 
+
+```{r}
+top_10_salary <- recent_grads %>%
+  select(Major, Median, Major_category, ShareWomen) %>%
+  arrange(desc(Median)) %>%
+  head(10)
+
+ggplot(top_10_salary, aes(x=reorder(Major, Median), y=Median, fill = Major_category))+
+  geom_bar(stat="summary")+
+  coord_flip()+
+  labs(x="Major", y="Median Salary", fill = "Major Category")
+```
+
+# Bottom 10 Majors in terms of Median Salary
+We also wanted to determine the lowest-earning majors to transparently inform students about their future financial outcomes. Compared to the highest-earning majors, the ten lowest-earning majors contain more variety in terms of major categories. Psychology and social work, along with humanities and liberal arts, comprise a more significant proportion of the lowest-earning majors. Students in these majors gain many transferable skills that can be applied to any occupation, which potentially explains why starting salaries can be lower than students who studied STEM. In addition, less technical jobs can involve more “caring” or “feminine” work, which society devalues because of cultural norms and structural obstacles.  
+
+```{r}
+bottom_10_salary <- recent_grads %>%
+  select(Major, Median, Major_category, ShareWomen) %>%
+  arrange(Median) %>%
+  head(10)
+
+ggplot(bottom_10_salary, aes(x=reorder(Major, -Median), y=Median, fill = Major_category))+
+  geom_bar(stat="summary")+
+  coord_flip()+
+  labs(x="Major", y="Median Salary", fill = "Major Category")
+```
+
+# Visualizing Salary Distribution Amongst New Graduates
+We created a box plot to visualize the trends in median salary and further examine the salary distribution between major categories. We found it interesting that majors such as law and public policy, business, and physical sciences have greater variation in terms of pay, as shown by the wider boxes. In contrast, majors like communications, education, and arts have a very narrow income range. Our findings should not discourage students from entering low-paying majors because, as shown below, variability exists within each industry.
+
+```{r}
+ggplot(recent_grads, aes(x=Major_category, y=Median))+
+  geom_boxplot()+
+  xlab("Major Category")+
+  ylab("Median Salary")+
+  coord_flip()
+```
+
+# Calculating and Visualizing Employment Rate
+
+To calculate the employment rate of each major category, we created a new variable in the dataset titled "Employment_rate." We divided the count of employed graduates by the total count of graduates. We visualized the employment rate for each category using a box and whisker plot to understand the variability within the variable. Based on the box plot, education has the highest median employment rate, followed by agriculture and business majors. Interestingly, most major categories have median employment rates at or above 0.75(75%), except for Biology and Life Sciences. 
+These results illuminated a surprising trend: graduates in less popular majors like agriculture and education appear to have better employment opportunities than those in more popular majors. Many reasons can explain this phenomenon, one being supply and demand economics. When the number of students pursuing a specific major exceeds the number of available job openings in a given industry, there will be a surplus of qualified graduates and a lower employment rate. Conversely, students pursuing unpopular or less prestigious majors encounter less competition in the job market and thus experience higher employment levels. We expect these trends to fluctuate based on market conditions and demand for specific industries.
+
+```{r}
+recent_grads <- recent_grads %>%
+  mutate(Employment_rate = Employed / Total)
+
+ggplot(recent_grads, aes(x=Major_category, y=Employment_rate))+
+  geom_boxplot()+
+  coord_flip()+
+  xlab("Major Category")+
+  ylab("Employment Rate")
+```
+
+# Types of Employment: Full-time versus Part-time
+
+Full-time versus part-time employment is an important consideration for evaluating job stability and quality. In this dataset, full-time workers work more than 35 hours a week, while part-time workers work fewer than 35 hours a week. Other differences between full-time and part-time employment include compensation, job security, and available benefits. Full-time employment is typically more stable and secure than part-time employment because of higher salaries and better benefits. Therefore, the type of employment matters when evaluating employment outcomes. 
+To examine the proportion of full-time workers within the employed graduate population, we created a new variable titled "Prop_full_time" that divides the number of full-time workers by the total number of employed workers. We plotted the proportion of full-time workers by major category in the bar graph below. Based on the diagram below, business majors produce the largest proportion of full-time workers, followed by engineering, then computers and mathematics. On the other end of the spectrum, arts, humanities, and health majors have the lowest proportion of graduates working full-time. This result makes sense because industries are structured differently.  Graduates in the arts and humanities experience more freelance employment opportunities, meaning they are more likely to sign project-based or part-time contracts. In contrast, graduates in the business or technology industry tend to find corporate roles at established firms or companies that hire more full-time workers.
+
+```{r}
+recent_grads <- recent_grads %>%
+  mutate(Prop_full_time = Full_time/Employed)
+
+ggplot(recent_grads, aes(x= reorder(Major_category, -Prop_full_time), y=Prop_full_time))+
+  geom_bar(stat="summary")+
+  coord_flip()+
+  xlab("Major Cateogry")+
+  ylab("Proportion of Full-time Employees")
+  
+```
+
+# Overview of Gender Distribution
+Finally, we examined how majors vary in terms of gender composition. This bar graph uses the “ShareWomen” variable to illustrate the proportion of women in each major. Darker shades of blue represent low percentages of women while lighter shades of blue indicate a higher percentage. At a glance, we can see that majors like engineering and computers and mathematics have relatively low shares of women. In contrast, education, psychology and social work, and health correspond to greater percentages of women. These patterns reinforce widespread gender stereotypes in our society as STEM fields remain male-dominated while women disproportionately occupy fields that require emotional labor. 
+```{r}
+ggplot(recent_grads, aes(x=Major_category, y= Median, fill=ShareWomen))+
+  geom_bar(stat="identity")+
+  coord_flip()+
+  labs(x= "Major Category", y = "Median Salary", fill="Proportion of Women")
+```
+
+# Gender in High-Earning Majors
+
+Using the list of top ten highest earning majors that we plotted earlier, we revised the graph to visualize the proportion of women that graduated with these degrees. Based on the scale shown below, the majority of these STEM-related majors are heavily male-dominated.
+
+```{r}
+
+top10_gender <- ggplot(top_10_salary, aes(x=reorder(Major, Median), y=Median, fill = ShareWomen))+
+  geom_bar(stat="identity")+
+  coord_flip()+
+  labs(x="Major", y="Median Salary", fill = "Proportion of Women")+
+  lims(fill=c(0,1))
+print(top10_gender)
+
+```
+
+# Gender in Low-Earning Majors
+Using the same process as above, we colored the list of lowest earning majors with the share of female graduates. In contrast to the highest-earning majors, the lowest-earning majors are all female-dominated. These trends clearly illuminate how women are steered towards fields with lower prestige in our society. If women continue to be overrepresented in low-earning majors and underrepresented in high-earning majors, gender inequality will continue to persist in the world of higher-education and labor market opportunities. 
+```{r}
+ggplot(recent_grads, aes(x=Major_category, y=Median))+
+  geom_boxplot()+
+  xlab("Major Category")+
+  ylab("Median Salary")+
+  coord_flip()
+```
+
+# Conclusion
+
+In summary, we have observed the following patterns from our exploratory data analysis:
+
+Popular majors may only sometimes lead to financial success or better employment opportunities. For example, while social sciences and communications ranked in the top three most popular majors, they fell behind in full-time employment opportunities and median salary. In contrast, engineering consistently ranks as a leading major in terms of full-time employment opportunities and median salary despite being one of the most unpopular majors among new graduates.
+Variability exists within major categories: While STEM majors tend to have better employment opportunities and higher pay, discrepancies exist between the physical and life sciences. For instance, astronomy and astrophysics rank in the top ten highest-earning majors, but zoology remains at the bottom. It is misleading to assume that all STEM majors have equal opportunities in the job market. 
+Gender inequalities exist and perpetuate differences in earning potential between men and women. Women are significantly underrepresented in high-paying engineering fields and overrepresented in low-paying fields associated with caring or emotional labor. Gender stereotypes regarding work continue to segregate men and women into different fields and devalue female-dominated labor. 
+
+While our exploratory data analysis sheds light on some ongoing trends in how undergraduate college majors may affect future career prospects, there are a few considerations that we want to acknowledge:  
+
+New grad earnings and employment may not be indicative of future opportunities: students in the liberal arts/social sciences tend to go into graduate programs and might earn less initially. We need to analyze graduate school outcomes to determine whether undergraduate majors significantly impact career trajectory overall.
+Students should still pursue their genuine academic interests. While our analysis shows that specific majors correlate with higher earnings and employment rates, it does not prove causation. Students should also consider intrinsic fulfillment, work-life balance, and other measures that contribute to overall job satisfaction when deciding their path. Trends will always change and the job market remains unpredictable, so it’s likely that these findings based on data collected over a decade ago do not accurately reflect current trends in employment and salary.
+
+Finally, our exploratory analysis still leaves room for further research. Some critical questions that have emerged from our analysis include:
+How educational systems encourage women to explore STEM fields and prevent attrition? How can STEM programs become more inclusive and accessible to women?
+As a society, how can we bridge the pay gaps between different industries and recognize the contributions of different academic disciplines?
