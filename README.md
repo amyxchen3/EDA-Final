@@ -17,4 +17,9 @@ To explore our research objectives, we used data from the American Community Sur
 * As a society, how can we bridge the pay gaps between different industries and recognize the contributions of different academic disciplines?
   
 ## Getting Started
+1. Clone this repository
+2. Download "recent-grads.csv". This is the dataset we used for this project
+3. Download "EDA Final Notebook" to view our analysis
+
+## Directories
 
