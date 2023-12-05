@@ -19,7 +19,7 @@ To explore our research objectives, we used data from the American Community Sur
 ## Getting Started
 1. Clone this repository
 2. Download "recent-grads.csv". This is the dataset we used for this project
-3. Download "Final EDA Notebook" to view our analysis
+3. Download "Final EDA Notebook" to view our analysis. The Rmd version is a notebook in R markdown that allows for editing and further exploration. The html version will present the complete vesrion of our analysis.
+4. Feel free to continue exploring our dataset or replicate our analysis!
 
-## Directories
 
